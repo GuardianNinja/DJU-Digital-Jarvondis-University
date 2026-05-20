@@ -1,17 +1,18 @@
 // sdk/client.ts (add)
-async getMissionsByLead(leadId: string) {
+async getSafetyQueue() {
   const query = /* GraphQL */ `
-    query MissionsByLead($leadId: ID!) {
-      missions(where: { lead: { id: $leadId } }) {
+    query SafetyQueue {
+      missions(where: { status: UNDER_REVIEW }) {
         id
         title
         status
         startDate
         domain { id name }
         risks { severity }
+        declarations { id type }
       }
     }
   `;
-  const res = await this.client.request<{ missions: any[] }>(query, { leadId });
+  const res = await this.client.request<{ missions: any[] }>(query);
   return res.missions;
 }
