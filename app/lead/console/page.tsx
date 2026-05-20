@@ -1,27 +1,30 @@
 // app/lead/console/page.tsx
 "use client";
 
+import { useIsMissionLead } from "@/lib/roleHelpers";
 import { useMyMissions } from "@/lib/hooks/useMyMissions";
 
 export default function MissionLeadConsole() {
-  const leadId = "current-user-id"; // from auth/session
-  const { missions, loading } = useMyMissions(leadId);
-
-  if (loading) return <div>Loading your missions…</div>;
+  const isLead = useIsMissionLead();
+  const { missions } = useMyMissions("user-123");
 
   return (
     <div>
       <h1>Mission Lead Console</h1>
-      <section>
-        <h2>My Missions</h2>
+
+      {!isLead && (
+        <p>You do not have permission to lead missions.</p>
+      )}
+
+      {isLead && (
         <ul>
           {missions.map(m => (
             <li key={m.id}>
-              {m.title} — {m.status} — {m.domain.name}
+              {m.title} — {m.status}
             </li>
           ))}
         </ul>
-      </section>
+      )}
     </div>
   );
 }
