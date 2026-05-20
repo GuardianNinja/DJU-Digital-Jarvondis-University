@@ -1,0 +1,209 @@
+scalar DateTime
+scalar JSON
+
+enum RiskCategory {
+  TECHNICAL
+  ETHICAL
+  ECOLOGICAL
+  OPERATIONAL
+  SOCIAL
+}
+
+enum RiskSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum MissionStatus {
+  DRAFT
+  UNDER_REVIEW
+  ACTIVE
+  PAUSED
+  COMPLETED
+  DENIED
+}
+
+enum BindingLevel {
+  BINDING
+  ADVISORY
+  UNDER_REVIEW
+}
+
+type Person @node {
+  id: ID! @id
+  name: String!
+  roles: [String!]!
+  affiliation: String
+
+  expertiseDomains: [Domain!]!
+    @relationship(type: "HAS_EXPERTISE_IN", direction: OUT)
+
+  leadsMissions: [Mission!]!
+    @relationship(type: "LEADS", direction: OUT)
+
+  participatesIn: [Mission!]!
+    @relationship(type: "PARTICIPATES_IN", direction: OUT)
+
+  mentorsMissions: [Mission!]!
+    @relationship(type: "MENTORS", direction: OUT)
+
+  reviewsMissions: [Mission!]!
+    @relationship(type: "REVIEWS", direction: OUT)
+
+  signedDeclarations: [Declaration!]!
+    @relationship(type: "SIGNED", direction: OUT)
+}
+
+type Domain @node {
+  id: ID! @id
+  name: String!
+  description: String
+
+  missions: [Mission!]!
+    @relationship(type: "BELONGS_TO_DOMAIN", direction: IN)
+
+  experts: [Person!]!
+    @relationship(type: "HAS_EXPERTISE_IN", direction: IN)
+}
+
+type Mission @node {
+  id: ID! @id
+  title: String!
+  description: String
+  status: MissionStatus! @default(value: "DRAFT")
+  riskLevel: RiskSeverity
+  startDate: DateTime
+  endDate: DateTime
+
+  domain: Domain!
+    @relationship(type: "BELONGS_TO_DOMAIN", direction: OUT)
+
+  lead: Person!
+    @relationship(type: "LEADS", direction: IN)
+
+  participants: [Person!]!
+    @relationship(type: "PARTICIPATES_IN", direction: IN)
+
+  mentors: [Person!]!
+    @relationship(type: "MENTORS", direction: IN)
+
+  artifacts: [Artifact!]!
+    @relationship(type: "PRODUCES", direction: OUT)
+
+  concepts: [Concept!]!
+    @relationship(type: "ADDRESSES", direction: OUT)
+
+  risks: [Risk!]!
+    @relationship(type: "HAS_RISK", direction: OUT)
+
+  charterClauses: [CharterClause!]!
+    @relationship(type: "BOUND_BY", direction: OUT)
+
+  decisions: [Decision!]!
+    @relationship(type: "DECIDES_ON", direction: IN)
+
+  declarations: [Declaration!]!
+    @relationship(type: "HAS_DECLARATION", direction: OUT)
+}
+
+type Artifact @node {
+  id: ID! @id
+  title: String!
+  type: String!
+  version: String
+  createdAt: DateTime! @timestamp(operations: [CREATE])
+  metadata: JSON
+
+  mission: Mission!
+    @relationship(type: "PRODUCES", direction: IN)
+
+  concepts: [Concept!]!
+    @relationship(type: "DESCRIBES", direction: OUT)
+}
+
+type Concept @node {
+  id: ID! @id
+  label: String!
+  description: String
+
+  domain: Domain
+    @relationship(type: "IN_DOMAIN", direction: OUT)
+
+  missions: [Mission!]!
+    @relationship(type: "ADDRESSES", direction: IN)
+
+  artifacts: [Artifact!]!
+    @relationship(type: "DESCRIBES", direction: IN)
+}
+
+type CharterClause @node {
+  id: ID! @id
+  article: String!
+  section: String!
+  text: String!
+  bindingLevel: BindingLevel!
+
+  missionsBound: [Mission!]!
+    @relationship(type: "BOUND_BY", direction: IN)
+
+  decisions: [Decision!]!
+    @relationship(type: "INTERPRETS", direction: IN)
+}
+
+type Risk @node {
+  id: ID! @id
+  category: RiskCategory!
+  severity: RiskSeverity!
+  likelihood: Float
+  description: String!
+
+  mission: Mission!
+    @relationship(type: "HAS_RISK", direction: IN)
+
+  mitigations: [Mitigation!]!
+    @relationship(type: "MITIGATED_BY", direction: OUT)
+}
+
+type Mitigation @node {
+  id: ID! @id
+  description: String!
+  status: String!
+
+  risk: Risk!
+    @relationship(type: "MITIGATED_BY", direction: IN)
+
+  owner: Person
+    @relationship(type: "OWNED_BY", direction: OUT)
+}
+
+type Decision @node {
+  id: ID! @id
+  type: String!
+  outcome: String!
+  date: DateTime!
+  notes: String
+
+  mission: Mission!
+    @relationship(type: "DECIDES_ON", direction: OUT)
+
+  clauses: [CharterClause!]!
+    @relationship(type: "INTERPRETS", direction: OUT)
+
+  steward: Person!
+    @relationship(type: "MADE_BY", direction: OUT)
+}
+
+type Declaration @node {
+  id: ID! @id
+  type: String! # e.g. "NON_WEAPONIZATION"
+  text: String!
+  createdAt: DateTime! @timestamp(operations: [CREATE])
+
+  mission: Mission!
+    @relationship(type: "HAS_DECLARATION", direction: IN)
+
+  signers: [Person!]!
+    @relationship(type: "SIGNED", direction: IN)
+}
