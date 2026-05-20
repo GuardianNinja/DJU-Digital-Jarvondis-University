@@ -1,0 +1,24 @@
+mutation FileNonWeaponization(
+  $missionId: ID!
+  $text: String!
+  $signerIds: [ID!]!
+) {
+  createDeclarations(
+    input: [{
+      type: "NON_WEAPONIZATION"
+      text: $text
+      mission: {
+        connect: { where: { node: { id: $missionId } } }
+      }
+      signers: {
+        connect: $signerIds.map(id => ({ where: { node: { id } } }))
+      }
+    }]
+  ) {
+    declarations {
+      id
+      type
+      createdAt
+    }
+  }
+}
